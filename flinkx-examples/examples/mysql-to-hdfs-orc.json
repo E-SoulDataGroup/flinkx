@@ -1,0 +1,135 @@
+{
+    "job": {
+        "setting": {
+            "speed": {
+                "channel": 1,
+                "bytes": 10000
+            },
+            "errorLimit": {
+                "record": 0,
+                "percentage": 0
+            }
+        },
+        "content": [
+            {
+                "reader": {
+					"name": "mysqlreader",
+                    "parameter": {
+						"username": "gezhihui",
+                        "password": "xxxxx",
+						"splitPk": "",
+						"where": "record_time >= '2018-07-02' and record_time < '2018-07-03'",
+                        "column": [
+                            "log_file",
+                            "log_line",
+                            "zid",
+                            "iuin",
+                            "record_time",
+                            "device_os",
+                            "user_level",
+                            "online_time",
+                            "account_type",
+                            "account_id",
+                            "from_ch",
+                            "user_id",
+                            "login_ip",
+                            "version",
+                            "vip_level"
+                        ],
+                        "connection": [
+                            {
+                                "jdbcUrl": [
+                                    "jdbc:mysql://xxxxxxx:3306/mtfsycn_data_log?charset=utf8"
+                                ],
+                                "table": [
+                                    "tab_logout"
+                                ]
+                            }
+                        ]
+                    } 
+                },
+                "writer": {
+                    "name": "hdfswriter",
+                    "parameter": {
+                        "hadoopConfig": {
+                            "dfs.nameservices": "DHTestCluster",
+                            "dfs.ha.namenodes.DHTestCluster": "nn1,nn2",
+                            "dfs.namenode.rpc-address.DHTestCluster.nn1": "hadoop1.test.yunwei.puppet.dh:8020",
+                            "dfs.namenode.rpc-address.DHTestCluster.nn2": "hadoop2.test.yunwei.puppet.dh:8020",
+                            "dfs.client.failover.proxy.provider.DHTestCluster": "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider"
+                        },
+                        "defaultFS": "hdfs://DHTestCluster",
+                        "fileType": "orc",
+                        "fileName": "par_dt=2018-07-02",
+                        "column": [
+                            {
+                                "name": "log_file",
+                                "type": "STRING"
+                            },
+                            {
+                                "name": "log_line",
+                                "type": "BIGINT"
+                            },
+                            {
+                                "name": "zid",
+                                "type": "BIGINT"
+                            },
+                            {
+                                "name": "iuin",
+                                "type": "STRING"
+                            },
+                            {
+                                "name": "record_time",
+                                "type": "STRING"
+                            },
+                            {
+                                "name": "device_os",
+                                "type": "STRING"
+                            },
+                            {
+                                "name": "user_level",
+                                "type": "BIGINT"
+                            },
+                            {
+                                "name": "online_time",
+                                "type": "BIGINT"
+                            },
+                            {
+                                "name": "account_type",
+                                "type": "STRING"
+                            },
+                            {
+                                "name": "account_id",
+                                "type": "STRING"
+                            },
+                            {
+                                "name": "from_ch",
+                                "type": "STRING"
+                            },
+                            {
+                                "name": "user_id",
+                                "type": "STRING"
+                            },
+                            {
+                                "name": "login_ip",
+                                "type": "STRING"
+                            },
+                            {
+                                "name": "version",
+                                "type": "STRING"
+                            },
+                            {
+                                "name": "vip_level",
+                                "type": "BIGINT"
+                            }
+                        ],
+                        "path": "/user/hive/warehouse/mtfsycn_data_log.db/tab_logout_2",
+                        "writeMode": "append",
+                        "fieldDelimiter": "\\001",
+						"compress":"SNAPPY"
+                    }
+                }
+            }
+        ]
+    }
+}
