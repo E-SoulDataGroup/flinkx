@@ -86,6 +86,9 @@ public class HdfsOrcOutputFormat extends HdfsOutputFormat {
 
     @Override
     public void open() throws IOException {
+        if(compress != null && compress.length() != 0 && compress.equalsIgnoreCase("SNAPPY")){
+            tmpPath = tmpPath + ".snappy";
+        }
         recordWriter = outputFormat.getRecordWriter(null, jobConf, tmpPath, Reporter.NULL);
     }
 

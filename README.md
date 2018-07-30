@@ -213,6 +213,7 @@ reader和writer包括name和parameter，分别表示插件名称和插件参数
 * [Odps读取插件](docs/odpsreader.md)
 * [PostgreSQL读取插件](docs/postgresqlreader.md)
 * [MongoDB读取插件](docs/mongodbreader.md)
+* [Http读取插件](docs/httpreader.md)
 
 ### 5.2 写入插件
 
@@ -227,10 +228,6 @@ reader和writer包括name和parameter，分别表示插件名称和插件参数
 * [PostgreSQL写入插件](docs/postgresqlwriter.md)
 * [MongoDB写入插件](docs/mongodbwriter.md)
 * [Redis写入插件](docs/rediswriter.md)
-
-## 6.招聘信息
-
-https://m.zhipin.com/weijd/v2/job/cc4eb187ea8b3ae51nJ82d-4ElI~?date8=20180609&sid=self_jd&from=singlemessage&isappinstalled=0
 
 
 
