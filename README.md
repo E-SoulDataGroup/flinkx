@@ -93,7 +93,7 @@ bin/flinkx -mode standalone -job /Users/softfly/company/flink-data-transfer/jobs
 
 ```
 以yarn模式启动注意一下几点：
-1.需要预先起送yarn-session
+1.需要预先启动yarn-session
 2.启动yarn-session的flink包，必须包含hadoop的jar包，例如flink-1.4.2-bin-hadoop27-scala_2.11.tgz
 3.运行jobmanager与taskmanager的节点必须要有flinkx
 ```
