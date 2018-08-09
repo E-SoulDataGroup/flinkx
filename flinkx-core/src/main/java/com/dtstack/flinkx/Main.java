@@ -29,15 +29,15 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
+
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * The main class entry
@@ -75,11 +75,14 @@ public class Main {
             config.setPluginRoot(pluginRoot);
         }
 
-
+        //TODO 本地模式同时启动多个任务出现端口占用的情况
+        Configuration conf = new Configuration();
+        conf.setString("query.proxy.ports", "50100-50200,50300-50400,51234");
+        conf.setString("query.server.ports", "50100-50200,50300-50400,51234");
         //构造并执行flink任务
         StreamExecutionEnvironment env = (StringUtils.isNotBlank(monitor)) ?
                 StreamExecutionEnvironment.getExecutionEnvironment() :
-                new MyLocalStreamEnvironment();
+                new MyLocalStreamEnvironment(conf);
 
         env.setParallelism(config.getJob().getSetting().getSpeed().getChannel());
         env.setRestartStrategy(RestartStrategies.noRestart());
