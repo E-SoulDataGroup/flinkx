@@ -11,6 +11,7 @@
 
     <modules>
         <module>flinkx-core</module>
+         <module>flinkx-http</module>
         <module>flinkx-rdb</module>
         <module>flinkx-es</module>
         <module>flinkx-ftp</module>
