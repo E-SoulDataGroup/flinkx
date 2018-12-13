@@ -1,6 +1,7 @@
 package com.dtstack.flinkx.http.reader;
 
 import com.dtstack.flinkx.inputformat.RichInputFormatBuilder;
+import com.dtstack.flinkx.reader.MetaColumn;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
@@ -36,16 +37,20 @@ public class HttpInputFormatBuilder extends RichInputFormatBuilder {
         }
     }
 
-    public void setColumnIndex(List<Integer> columnIndex) {
-        httpInputFormat.columnIndex = columnIndex;
-    }
+//    public void setColumnIndex(List<Integer> columnIndex) {
+//        httpInputFormat.columnIndex = columnIndex;
+//    }
+//
+//    public void setColumnValue(List<String> columnValue) {
+//        httpInputFormat.columnValue = columnValue;
+//    }
+//
+//    public void setColumnType(List<String> columnType) {
+//        httpInputFormat.columnType = columnType;
+//    }
 
-    public void setColumnValue(List<String> columnValue) {
-        httpInputFormat.columnValue = columnValue;
-    }
-
-    public void setColumnType(List<String> columnType) {
-        httpInputFormat.columnType = columnType;
+    public void setMetaColumn(List<MetaColumn> metaColumns) {
+        httpInputFormat.metaColumns = metaColumns;
     }
 
     @Override
