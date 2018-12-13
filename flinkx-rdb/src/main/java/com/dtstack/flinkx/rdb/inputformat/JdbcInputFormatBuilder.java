@@ -30,6 +30,7 @@ import java.util.List;
  * Company: www.dtstack.com
  * @author huyifan.zju@163.com
  */
+@Deprecated
 public class JdbcInputFormatBuilder extends RichInputFormatBuilder {
 
     private JdbcInputFormat format;
@@ -48,10 +49,6 @@ public class JdbcInputFormatBuilder extends RichInputFormatBuilder {
 
     public void setQuery(String query) {
         format.queryTemplate = query;
-    }
-
-    public void setDescColumnTypeList(List<String> columnTypeList) {
-        format.descColumnTypeList = columnTypeList;
     }
 
     public void setParameterValues(Object[][] parameterValues) {
