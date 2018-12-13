@@ -18,6 +18,7 @@
 
 package com.dtstack.flinkx.mysql;
 
+import com.dtstack.flinkx.enums.EDatabaseType;
 import com.dtstack.flinkx.rdb.BaseDatabaseMeta;
 import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
@@ -33,8 +34,8 @@ import java.util.Map;
 public class MySqlDatabaseMeta extends BaseDatabaseMeta {
 
     @Override
-    public String getDatabaseType() {
-        return "mysql";
+    public EDatabaseType getDatabaseType() {
+        return EDatabaseType.MySQL;
     }
 
     @Override
@@ -60,6 +61,11 @@ public class MySqlDatabaseMeta extends BaseDatabaseMeta {
     @Override
     public String getEndQuote() {
         return "`";
+    }
+
+    @Override
+    public String quoteValue(String value, String column) {
+        return String.format("\"%s\" as %s",value,column);
     }
 
     @Override
@@ -105,7 +111,7 @@ public class MySqlDatabaseMeta extends BaseDatabaseMeta {
 
     @Override
     public String getSplitFilter(String columnName) {
-        return String.format("%s mod ? = ?", getStartQuote() + columnName + getEndQuote());
+        return String.format("%s mod ${N} = ${M}", getStartQuote() + columnName + getEndQuote());
     }
 
     @Override

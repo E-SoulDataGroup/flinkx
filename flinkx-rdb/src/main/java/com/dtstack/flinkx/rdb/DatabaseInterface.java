@@ -18,6 +18,8 @@
 
 package com.dtstack.flinkx.rdb;
 
+import com.dtstack.flinkx.enums.EDatabaseType;
+
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +31,7 @@ import java.util.Map;
  */
 public interface DatabaseInterface {
 
-    String getDatabaseType();
+    EDatabaseType getDatabaseType();
 
     String getDriverClass();
 
@@ -40,6 +42,8 @@ public interface DatabaseInterface {
     String getStartQuote();
 
     String getEndQuote();
+
+    String quoteValue(String value,String column);
 
     String quoteColumn(String column);
 

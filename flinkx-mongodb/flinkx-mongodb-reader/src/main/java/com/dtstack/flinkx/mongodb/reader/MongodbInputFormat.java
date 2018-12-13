@@ -1,8 +1,26 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtstack.flinkx.mongodb.reader;
 
 import com.dtstack.flinkx.inputformat.RichInputFormat;
-import com.dtstack.flinkx.mongodb.Column;
 import com.dtstack.flinkx.mongodb.MongodbUtil;
+import com.dtstack.flinkx.reader.MetaColumn;
 import com.dtstack.flinkx.util.StringUtil;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
@@ -16,16 +34,15 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.dtstack.flinkx.mongodb.MongodbConfigKeys.*;
 
 /**
+ * Read plugin for reading static data
+ *
+ * @Company: www.dtstack.com
  * @author jiangbo
- * @date 2018/6/5 10:28
  */
 public class MongodbInputFormat extends RichInputFormat {
 
@@ -39,7 +56,7 @@ public class MongodbInputFormat extends RichInputFormat {
 
     protected String collectionName;
 
-    protected List<Column> columns;
+    protected List<MetaColumn> metaColumns;
 
     protected String filterJson;
 
@@ -78,7 +95,33 @@ public class MongodbInputFormat extends RichInputFormat {
 
     @Override
     public Row nextRecordInternal(Row row) throws IOException {
-        return MongodbUtil.convertDocTORow(cursor.next(),columns);
+        Document doc = cursor.next();
+        if(metaColumns.size() == 1 && "*".equals(metaColumns.get(0).getName())){
+            row = new Row(doc.size());
+            String[] names = doc.keySet().toArray(new String[0]);
+            for (int i = 0; i < names.length; i++) {
+                row.setField(i,doc.get(names[i]));
+            }
+        } else {
+            row = new Row(metaColumns.size());
+            for (int i = 0; i < metaColumns.size(); i++) {
+                MetaColumn metaColumn = metaColumns.get(i);
+                Object value;
+                if (metaColumn.getValue() != null){
+                    value = metaColumn.getValue();
+                } else {
+                    value = doc.get(metaColumn.getName());
+                }
+
+                if(value != null && value instanceof String){
+                    value = StringUtil.string2col(String.valueOf(value),metaColumn.getType(),metaColumn.getTimeFormat());
+                }
+
+                row.setField(i,value);
+            }
+        }
+
+        return row;
     }
 
     @Override

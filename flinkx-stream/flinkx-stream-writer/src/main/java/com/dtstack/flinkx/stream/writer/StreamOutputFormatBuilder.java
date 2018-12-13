@@ -21,6 +21,8 @@ package com.dtstack.flinkx.stream.writer;
 import com.dtstack.flinkx.outputformat.RichOutputFormatBuilder;
 
 /**
+ * The builder of StreamOutputFormat
+ *
  * @Company: www.dtstack.com
  * @author jiangbo
  */
@@ -30,6 +32,10 @@ public class StreamOutputFormatBuilder extends RichOutputFormatBuilder {
 
     public StreamOutputFormatBuilder() {
         super.format = format = new StreamOutputFormat();
+    }
+
+    public void setPrint(boolean print){
+        format.print = print;
     }
 
     @Override

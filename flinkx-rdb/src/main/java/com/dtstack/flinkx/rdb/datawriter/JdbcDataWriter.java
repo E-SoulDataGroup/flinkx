@@ -20,10 +20,12 @@ package com.dtstack.flinkx.rdb.datawriter;
 
 import com.dtstack.flinkx.config.DataTransferConfig;
 import com.dtstack.flinkx.config.WriterConfig;
+import com.dtstack.flinkx.enums.EDatabaseType;
 import com.dtstack.flinkx.rdb.DatabaseInterface;
 import com.dtstack.flinkx.rdb.outputformat.JdbcOutputFormatBuilder;
 import com.dtstack.flinkx.rdb.type.TypeConverterInterface;
 import com.dtstack.flinkx.rdb.util.DBUtil;
+import com.dtstack.flinkx.reader.MetaColumn;
 import com.dtstack.flinkx.util.ClassUtil;
 import com.dtstack.flinkx.writer.DataWriter;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -31,6 +33,7 @@ import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.functions.sink.OutputFormatSinkFunction;
 import org.apache.flink.types.Row;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +63,8 @@ public class JdbcDataWriter extends DataWriter {
 
     private static final int DEFAULT_BATCH_SIZE = 1024;
 
+    private final static int SQL_SERVER_MAX_PARAMETER_MARKER = 2000;
+
     public void setTypeConverterInterface(TypeConverterInterface typeConverter) {
         this.typeConverter = typeConverter;
     }
@@ -87,7 +92,7 @@ public class JdbcDataWriter extends DataWriter {
                     paramMap.put(leftRight[0], leftRight[1]);
                 }
             }
-            paramMap.put("useCursorFetch", "true");
+            paramMap.put("rewriteBatchedStatements", "true");
 
             StringBuffer sb = new StringBuffer(splits[0]);
             if(paramMap.size() != 0) {
@@ -111,7 +116,7 @@ public class JdbcDataWriter extends DataWriter {
         preSql = (List<String>) writerConfig.getParameter().getVal(KEY_PRE_SQL);
         postSql = (List<String>) writerConfig.getParameter().getVal(KEY_POST_SQL);
         batchSize = writerConfig.getParameter().getIntVal(KEY_BATCH_SIZE, DEFAULT_BATCH_SIZE);
-        column = (List<String>) writerConfig.getParameter().getColumn();
+        column = MetaColumn.getColumnNames(writerConfig.getParameter().getColumn());
         mode = writerConfig.getParameter().getStringVal(KEY_WRITE_MODE);
 
         updateKey = (Map<String, List<String>>) writerConfig.getParameter().getVal(KEY_UPDATE_KEY);
@@ -125,7 +130,7 @@ public class JdbcDataWriter extends DataWriter {
         builder.setDBUrl(dbUrl);
         builder.setUsername(username);
         builder.setPassword(password);
-        builder.setBatchInterval(batchSize);
+        builder.setBatchInterval(getBatchSize());
         builder.setMonitorUrls(monitorUrls);
         builder.setPreSql(preSql);
         builder.setPostSql(postSql);
@@ -147,6 +152,19 @@ public class JdbcDataWriter extends DataWriter {
         String sinkName = (databaseInterface.getDatabaseType() + "writer").toLowerCase();
         dataStreamSink.name(sinkName);
         return dataStreamSink;
+    }
+
+    /**
+     * fix bug:Prepared or callable statement has more than 2000 parameter markers
+     */
+    private int getBatchSize(){
+        if(databaseInterface.getDatabaseType() == EDatabaseType.SQLServer){
+            if(column.size() * batchSize >= SQL_SERVER_MAX_PARAMETER_MARKER){
+                batchSize = SQL_SERVER_MAX_PARAMETER_MARKER / column.size();
+            }
+        }
+
+        return batchSize;
     }
 
     protected Connection getConnection() {

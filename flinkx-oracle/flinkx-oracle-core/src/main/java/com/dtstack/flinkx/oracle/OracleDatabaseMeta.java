@@ -18,6 +18,7 @@
 
 package com.dtstack.flinkx.oracle;
 
+import com.dtstack.flinkx.enums.EDatabaseType;
 import com.dtstack.flinkx.rdb.BaseDatabaseMeta;
 import org.apache.commons.lang.StringUtils;
 import java.util.List;
@@ -38,8 +39,8 @@ public class OracleDatabaseMeta extends BaseDatabaseMeta {
         return table;
     }
     @Override
-    public String getDatabaseType() {
-        return "oracle";
+    public EDatabaseType getDatabaseType() {
+        return EDatabaseType.Oracle;
     }
 
     @Override
@@ -58,8 +59,13 @@ public class OracleDatabaseMeta extends BaseDatabaseMeta {
     }
 
     @Override
+    public String quoteValue(String value, String column) {
+        return String.format("'%s' as %s",value,column);
+    }
+
+    @Override
     public String getSplitFilter(String columnName) {
-        return String.format("mod(%s, ?) = ?", getStartQuote() + columnName + getEndQuote());
+        return String.format("mod(%s, ${N}) = ${M}", getStartQuote() + columnName + getEndQuote());
     }
 
     @Override
