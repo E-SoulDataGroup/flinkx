@@ -471,6 +471,8 @@
 	* 必选：是 <br />
 
 	* 默认值：全部按照string类型读取 <br />
+	
+	* 增加文件名行号字段以解决出现异常,数据重复的问题,故column 需要比原来的字段多一个.(针对httpreader->mysqlwriter业务需求)
 
 * **fieldDelimiter**
 
