@@ -20,8 +20,9 @@ package com.dtstack.flinkx.enums;
 
 /**
  * Database type
- *
+ * <p>
  * Company: www.dtstack.com
+ *
  * @author jiangbo
  */
 public enum EDatabaseType {

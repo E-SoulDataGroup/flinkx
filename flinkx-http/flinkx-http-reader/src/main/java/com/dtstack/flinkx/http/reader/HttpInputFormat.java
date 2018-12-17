@@ -33,19 +33,18 @@ public class HttpInputFormat extends RichInputFormat {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpInputFormat.class);
 
     private static final long serialVersionUID = 4140405535499685688L;
+    private transient BufferedReader br;
+    private transient String line;
 
     protected String httpUrl;
     protected String delimiter = ",";
     protected String encoding = "UTF-8";
+    protected String startMark = "*";
 
-//    protected List<Integer> columnIndex;
-//    protected List<String> columnType;
-//    protected List<String> columnValue;
     protected List<MetaColumn> metaColumns;
-
-    private transient BufferedReader br;
-
-    private transient String line;
+    protected String httpFileName;
+    protected Long rowNum;
+    protected String fileNameRowNum;
 
     @Override
     protected void openInternal(InputSplit inputSplit) throws IOException {
@@ -57,25 +56,11 @@ public class HttpInputFormat extends RichInputFormat {
     }
 
     @Override
-    protected Row nextRecordInternal(Row row) throws IOException {
-//        row = new Row(columnIndex.size());
-//        String[] fields = line.split(delimiter, -1);
-//        for (int i = 0; i < columnIndex.size(); ++i) {
-//            Integer index = columnIndex.get(i);
-//            String val = columnValue.get(i);
-//            if (index != null) {
-//                String col = fields[index];
-//                row.setField(i, col);
-//            } else if (val != null) {
-//                String type = columnType.get(i);
-//                Object col = StringUtil.string2col(String.valueOf(val), type);
-//                row.setField(i, col);
-//            }
-//        }
-//        return row;
-
-        String[] fields = line.split(delimiter);
-        if (metaColumns.size() == 1 && "*".equals(metaColumns.get(0).getName())){
+    protected Row nextRecordInternal(Row row) {
+        rowNum = super.numReadCounter.getLocalValue();
+        fileNameRowNum = httpFileName + "_" + rowNum;
+        String[] fields = (line + "," + fileNameRowNum).split(delimiter);
+        if (metaColumns.size() == 1 && startMark.equals(metaColumns.get(0).getName())) {
             row = new Row(fields.length);
             for (int i = 0; i < fields.length; i++) {
                 row.setField(i, fields[i]);
@@ -85,22 +70,21 @@ public class HttpInputFormat extends RichInputFormat {
             for (int i = 0; i < metaColumns.size(); i++) {
                 MetaColumn metaColumn = metaColumns.get(i);
                 Object value;
-                if(metaColumn.getValue() != null){
+                if (metaColumn.getValue() != null) {
                     value = metaColumn.getValue();
-                } else if(metaColumn.getIndex() != null){
+                } else if (metaColumn.getIndex() != null) {
                     value = fields[metaColumn.getIndex()];
                 } else {
                     value = null;
+                    {
+                    }
                 }
-
-                if(value != null){
-                    value = StringUtil.string2col(String.valueOf(value),metaColumn.getType(),metaColumn.getTimeFormat());
+                if (value != null) {
+                    value = StringUtil.string2col(String.valueOf(value), metaColumn.getType(), metaColumn.getTimeFormat());
                 }
-
                 row.setField(i, value);
             }
         }
-
         return row;
     }
 
@@ -116,7 +100,7 @@ public class HttpInputFormat extends RichInputFormat {
     }
 
     @Override
-    public InputSplit[] createInputSplits(int minNumSplits) throws IOException {
+    public InputSplit[] createInputSplits(int minNumSplits) {
         return new GenericInputSplit[]{new GenericInputSplit(0, 1)};
     }
 

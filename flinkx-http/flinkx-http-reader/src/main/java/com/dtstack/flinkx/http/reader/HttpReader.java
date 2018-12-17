@@ -30,9 +30,6 @@ public class HttpReader extends DataReader {
     private String fieldDelimiter;
     private String encoding;
 
-//    private List<Integer> columnIndex;
-//    private List<String> columnType;
-//    private List<String> columnValue;
     private List<MetaColumn> metaColumns;
 
 
@@ -42,43 +39,22 @@ public class HttpReader extends DataReader {
         this.httpUrl = readerConfig.getParameter().getStringVal(HttpConfigKeys.KEY_HTTP_URL);
         this.fieldDelimiter = readerConfig.getParameter().getStringVal(HttpConfigKeys.KEY_FIELD_DELIMITER, HttpConfigConstants.DEFAULT_FIELD_DELIMITER);
         this.encoding = readerConfig.getParameter().getStringVal(HttpConfigKeys.KEY_ENCODING);
-        if(!this.fieldDelimiter.equals(HttpConfigConstants.DEFAULT_FIELD_DELIMITER)) {
+        if (!this.fieldDelimiter.equals(HttpConfigConstants.DEFAULT_FIELD_DELIMITER)) {
             this.fieldDelimiter = StringUtil.convertRegularExpr(fieldDelimiter);
         }
 
         List columns = readerConfig.getParameter().getColumn();
         metaColumns = MetaColumn.getMetaColumns(columns);
-//        if(columns != null && !columns.isEmpty()) {
-//            if (columns.get(0) instanceof Map) {
-//                columnIndex = new ArrayList();
-//                columnType = new ArrayList<>();
-//                columnValue = new ArrayList<>();
-//                for (int i = 0; i < columns.size(); ++i) {
-//                    Map sm = (Map) columns.get(i);
-//                    Double temp = (Double) sm.get("index");
-//                    columnIndex.add(temp != null ? temp.intValue() : null);
-//                    columnType.add((String) sm.get("type"));
-//                    columnValue.add((String) sm.get("value"));
-//                }
-//            } else if (!columns.get(0).equals("*") || columns.size() != 1) {
-//                throw new IllegalArgumentException("column argument error");
-//            }
-//        }
-
     }
 
     @Override
     public DataStream<Row> readData() {
-
         HttpInputFormatBuilder builder = new HttpInputFormatBuilder();
         builder.setMetaColumn(metaColumns);
-//        builder.setColumnIndex(this.columnIndex);
-//        builder.setColumnType(this.columnType);
-//        builder.setColumnValue(this.columnValue);
         builder.setDelimiter(this.fieldDelimiter);
         builder.setHttpUrl(this.httpUrl);
         builder.setEncoding(this.encoding);
-
+        builder.setHttpFileName(this.httpUrl);
         return createInput(builder.finish(), "httpreader");
     }
 }

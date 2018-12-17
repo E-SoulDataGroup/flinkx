@@ -20,29 +20,25 @@ package com.dtstack.flinkx.rdb.outputformat;
 import com.dtstack.flinkx.enums.EDatabaseType;
 import com.dtstack.flinkx.enums.EWriteMode;
 import com.dtstack.flinkx.exception.WriteRecordException;
+import com.dtstack.flinkx.outputformat.RichOutputFormat;
 import com.dtstack.flinkx.rdb.DatabaseInterface;
 import com.dtstack.flinkx.rdb.type.TypeConverterInterface;
 import com.dtstack.flinkx.rdb.util.DBUtil;
-import com.dtstack.flinkx.outputformat.RichOutputFormat;
 import com.dtstack.flinkx.util.ClassUtil;
 import com.dtstack.flinkx.util.DateUtil;
 import org.apache.flink.types.Row;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
-import java.util.*;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * OutputFormat for writing data to relational database.
- *
+ * <p>
  * Company: www.dtstack.com
+ *
  * @author huyifan.zju@163.com
  */
 public class JdbcOutputFormat extends RichOutputFormat {
@@ -77,7 +73,7 @@ public class JdbcOutputFormat extends RichOutputFormat {
 
     protected List<String> column;
 
-    protected Map<String,List<String>> updateKey;
+    protected Map<String, List<String>> updateKey;
 
     protected List<String> fullColumn;
 
@@ -99,11 +95,11 @@ public class JdbcOutputFormat extends RichOutputFormat {
             "AND t.table_name = '%s'";
 
     protected PreparedStatement prepareSingleTemplates() throws SQLException {
-        if(fullColumn == null || fullColumn.size() == 0) {
+        if (fullColumn == null || fullColumn.size() == 0) {
             fullColumn = column;
         }
 
-        String singleSql = null;
+        String singleSql;
         if (EWriteMode.INSERT.name().equalsIgnoreCase(mode)) {
             singleSql = databaseInterface.getInsertStatement(column, table);
         } else if (EWriteMode.REPLACE.name().equalsIgnoreCase(mode)) {
@@ -121,11 +117,11 @@ public class JdbcOutputFormat extends RichOutputFormat {
     }
 
     protected PreparedStatement prepareMultipleTemplates(int batchSize) throws SQLException {
-        if(fullColumn == null || fullColumn.size() == 0) {
+        if (fullColumn == null || fullColumn.size() == 0) {
             fullColumn = column;
         }
 
-        String multipleSql = null;
+        String multipleSql;
         if (EWriteMode.INSERT.name().equalsIgnoreCase(mode)) {
             multipleSql = databaseInterface.getMultiInsertStatement(column, table, batchSize);
         } else if (EWriteMode.REPLACE.name().equalsIgnoreCase(mode)) {
@@ -139,21 +135,21 @@ public class JdbcOutputFormat extends RichOutputFormat {
     }
 
     @Override
-    protected void openInternal(int taskNumber, int numTasks) throws IOException {
+    protected void openInternal(int taskNumber, int numTasks) {
         try {
             ClassUtil.forName(drivername, getClass().getClassLoader());
             dbConn = DBUtil.getConnection(dbURL, username, password);
 
-            if(batchInterval > 1 && databaseInterface.getDatabaseType() != EDatabaseType.Oracle){
+            if (batchInterval > 1 && databaseInterface.getDatabaseType() != EDatabaseType.Oracle) {
                 dbConn.setAutoCommit(false);
             }
 
-            if(fullColumn == null || fullColumn.size() == 0) {
+            if (fullColumn == null || fullColumn.size() == 0) {
                 fullColumn = probeFullColumns(table, dbConn);
             }
 
-            if (!EWriteMode.INSERT.name().equalsIgnoreCase(mode)){
-                if(updateKey == null || updateKey.size() == 0) {
+            if (!EWriteMode.INSERT.name().equalsIgnoreCase(mode)) {
+                if (updateKey == null || updateKey.size() == 0) {
                     updateKey = probePrimaryKeys(table, dbConn);
                 }
             }
@@ -161,11 +157,11 @@ public class JdbcOutputFormat extends RichOutputFormat {
             singleUpload = prepareSingleTemplates();
             multipleUpload = prepareMultipleTemplates();
 
-            if(fullColumnType == null) {
+            if (fullColumnType == null) {
                 fullColumnType = analyzeTable();
             }
 
-            for(String col : column) {
+            for (String col : column) {
                 columnType.add(fullColumnType.get(fullColumn.indexOf(col)));
             }
 
@@ -182,13 +178,13 @@ public class JdbcOutputFormat extends RichOutputFormat {
             Statement stmt = dbConn.createStatement();
             ResultSet rs = stmt.executeQuery(databaseInterface.getSQLQueryFields(databaseInterface.quoteTable(table)));
             ResultSetMetaData rd = rs.getMetaData();
-            for(int i = 0; i < rd.getColumnCount(); ++i) {
-                ret.add(rd.getColumnTypeName(i+1));
+            for (int i = 0; i < rd.getColumnCount(); ++i) {
+                ret.add(rd.getColumnTypeName(i + 1));
             }
 
-            if(fullColumn == null || fullColumn.size() == 0){
-                for(int i = 0; i < rd.getColumnCount(); ++i) {
-                    fullColumn.add(rd.getColumnName(i+1));
+            if (fullColumn == null || fullColumn.size() == 0) {
+                for (int i = 0; i < rd.getColumnCount(); ++i) {
+                    fullColumn.add(rd.getColumnName(i + 1));
                 }
             }
         } catch (SQLException e) {
@@ -203,11 +199,11 @@ public class JdbcOutputFormat extends RichOutputFormat {
         int index = 0;
         try {
             for (; index < row.getArity(); index++) {
-                singleUpload.setObject(index+1,getField(row,index));
+                singleUpload.setObject(index + 1, getField(row, index));
             }
             singleUpload.execute();
         } catch (Exception e) {
-            if(index < row.getArity()) {
+            if (index < row.getArity()) {
                 throw new WriteRecordException(recordConvertDetailErrorMessage(index, row), e, index, row);
             }
             throw new WriteRecordException(e.getMessage(), e);
@@ -222,23 +218,23 @@ public class JdbcOutputFormat extends RichOutputFormat {
     @Override
     protected void writeMultipleRecordsInternal() throws Exception {
         PreparedStatement upload;
-        if(rows.size() == batchInterval && EDatabaseType.SQLServer != databaseInterface.getDatabaseType()) {
+        if (rows.size() == batchInterval && EDatabaseType.SQLServer != databaseInterface.getDatabaseType()) {
             upload = multipleUpload;
         } else {
             upload = prepareMultipleTemplates(rows.size());
         }
 
         int k = 1;
-        for(int i = 0; i < rows.size(); ++i) {
+        for (int i = 0; i < rows.size(); ++i) {
             Row row = rows.get(i);
-            for(int j = 0; j < row.getArity(); ++j) {
-                upload.setObject(k,getField(row,j));
+            for (int j = 0; j < row.getArity(); ++j) {
+                upload.setObject(k, getField(row, j));
                 k++;
             }
         }
 
         upload.execute();
-        if(databaseInterface.getDatabaseType() != EDatabaseType.Oracle){
+        if (databaseInterface.getDatabaseType() != EDatabaseType.Oracle) {
             dbConn.commit();
         }
     }
@@ -246,24 +242,24 @@ public class JdbcOutputFormat extends RichOutputFormat {
     protected Object getField(Row row, int index) {
         Object field = row.getField(index);
         String type = columnType.get(index);
-        if(type.matches(DateUtil.DATE_REGEX)) {
-            field = DateUtil.columnToDate(field,null);
-        } else if(type.matches(DateUtil.DATETIME_REGEX) || type.matches(DateUtil.TIMESTAMP_REGEX)){
-            field = DateUtil.columnToTimestamp(field,null);
+        if (type.matches(DateUtil.DATE_REGEX)) {
+            field = DateUtil.columnToDate(field, null);
+        } else if (type.matches(DateUtil.DATETIME_REGEX) || type.matches(DateUtil.TIMESTAMP_REGEX)) {
+            field = DateUtil.columnToTimestamp(field, null);
         }
 
-        if(EDatabaseType.PostgreSQL == databaseInterface.getDatabaseType()){
-            field = typeConverter.convert(field,type);
+        if (EDatabaseType.PostgreSQL == databaseInterface.getDatabaseType()) {
+            field = typeConverter.convert(field, type);
         }
 
         return field;
     }
 
     protected List<String> probeFullColumns(String table, Connection dbConn) throws SQLException {
-        String schema =null;
-        if(EDatabaseType.Oracle == databaseInterface.getDatabaseType()) {
+        String schema = null;
+        if (EDatabaseType.Oracle == databaseInterface.getDatabaseType()) {
             String[] parts = table.split("\\.");
-            if(parts.length == 2) {
+            if (parts.length == 2) {
                 schema = parts[0].toUpperCase();
                 table = parts[1];
             }
@@ -271,38 +267,37 @@ public class JdbcOutputFormat extends RichOutputFormat {
 
         List<String> ret = new ArrayList<>();
         ResultSet rs = dbConn.getMetaData().getColumns(null, schema, table, null);
-        while(rs.next()) {
+        while (rs.next()) {
             ret.add(rs.getString("COLUMN_NAME"));
         }
         return ret;
     }
 
 
-
     protected Map<String, List<String>> probePrimaryKeys(String table, Connection dbConn) throws SQLException {
         Map<String, List<String>> map = new HashMap<>();
         ResultSet rs;
-        if(EDatabaseType.Oracle == databaseInterface.getDatabaseType()){
-            PreparedStatement ps = dbConn.prepareStatement(String.format(GET_ORACLE_INDEX_SQL,table));
+        if (EDatabaseType.Oracle == databaseInterface.getDatabaseType()) {
+            PreparedStatement ps = dbConn.prepareStatement(String.format(GET_ORACLE_INDEX_SQL, table));
             rs = ps.executeQuery();
-        } else if(EDatabaseType.DB2 == databaseInterface.getDatabaseType()){
+        } else if (EDatabaseType.DB2 == databaseInterface.getDatabaseType()) {
             rs = dbConn.getMetaData().getIndexInfo(null, null, table.toUpperCase(), true, false);
         } else {
             rs = dbConn.getMetaData().getIndexInfo(null, null, table, true, false);
         }
 
-        while(rs.next()) {
+        while (rs.next()) {
             String indexName = rs.getString("INDEX_NAME");
-            if(!map.containsKey(indexName)) {
-                map.put(indexName,new ArrayList<>());
+            if (!map.containsKey(indexName)) {
+                map.put(indexName, new ArrayList<>());
             }
             map.get(indexName).add(rs.getString("COLUMN_NAME"));
         }
-        Map<String,List<String>> retMap = new HashMap<>();
-        for(Map.Entry<String,List<String>> entry: map.entrySet()) {
+        Map<String, List<String>> retMap = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : map.entrySet()) {
             String k = entry.getKey();
             List<String> v = entry.getValue();
-            if(v!=null && v.size() != 0 && v.get(0) != null) {
+            if (v != null && v.size() != 0 && v.get(0) != null) {
                 retMap.put(k, v);
             }
         }
@@ -311,20 +306,20 @@ public class JdbcOutputFormat extends RichOutputFormat {
 
     @Override
     public void closeInternal() {
-        if(taskNumber != 0) {
-            DBUtil.closeDBResources(null,null,dbConn);
+        if (taskNumber != 0) {
+            DBUtil.closeDBResources(null, null, dbConn);
             dbConn = null;
         }
     }
 
     @Override
     protected boolean needWaitBeforeWriteRecords() {
-        return  preSql != null && preSql.size() != 0;
+        return preSql != null && preSql.size() != 0;
     }
 
     @Override
-    protected void beforeWriteRecords()  {
-        if(taskNumber == 0) {
+    protected void beforeWriteRecords() {
+        if (taskNumber == 0) {
             DBUtil.executeBatch(dbConn, preSql);
         }
     }
@@ -337,7 +332,7 @@ public class JdbcOutputFormat extends RichOutputFormat {
     @Override
     protected void beforeCloseInternal() {
         // 执行postsql
-        if(taskNumber == 0) {
+        if (taskNumber == 0) {
             DBUtil.executeBatch(dbConn, postSql);
         }
     }

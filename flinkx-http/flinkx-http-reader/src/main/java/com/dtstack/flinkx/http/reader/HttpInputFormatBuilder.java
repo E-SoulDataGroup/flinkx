@@ -25,6 +25,12 @@ public class HttpInputFormatBuilder extends RichInputFormatBuilder {
         httpInputFormat.httpUrl = httpUrl;
     }
 
+    public void setHttpFileName(String httpUrl) {
+        String[] fields = httpUrl.split("/");
+        String fileName = fields[fields.length - 1].split("\\.")[0];
+        httpInputFormat.httpFileName=fileName;
+    }
+
     public void setDelimiter(String delimiter) {
         if (StringUtils.isNotEmpty(delimiter)) {
             httpInputFormat.delimiter = delimiter;
@@ -36,18 +42,6 @@ public class HttpInputFormatBuilder extends RichInputFormatBuilder {
             httpInputFormat.encoding = encoding;
         }
     }
-
-//    public void setColumnIndex(List<Integer> columnIndex) {
-//        httpInputFormat.columnIndex = columnIndex;
-//    }
-//
-//    public void setColumnValue(List<String> columnValue) {
-//        httpInputFormat.columnValue = columnValue;
-//    }
-//
-//    public void setColumnType(List<String> columnType) {
-//        httpInputFormat.columnType = columnType;
-//    }
 
     public void setMetaColumn(List<MetaColumn> metaColumns) {
         httpInputFormat.metaColumns = metaColumns;
